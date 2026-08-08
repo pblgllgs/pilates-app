@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Perfiles: los usuarios pueden leer/editar solo su propio perfil.
+    // En create no puede asignarse isAdmin; en update solo puede mantener
+    // el mismo valor de isAdmin que ya tenía (evita auto-promoción sin bloquear
+    // a los admins de editar su nombre o foto).
+    match /profiles/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.isAdmin == false;
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.isAdmin
+                       == get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.isAdmin;
+      allow delete: if false;
+    }
+
+    // Videos: lectura pública (solo publicados), escritura solo admin.
+    match /videos/{videoId} {
+      allow read: if resource.data.status == 'published'
+                  || (request.auth != null && isAdmin());
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // Planes: lectura pública, escritura solo admin.
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // Solicitudes de compra/suscripción.
+    // El usuario puede crear y leer las suyas; el admin puede leerlas todas y decidir.
+    match /requests/{requestId} {
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid
+                    && request.resource.data.status == 'pending';
+      allow read: if request.auth != null
+                  && (request.auth.uid == resource.data.uid || isAdmin());
+      allow update: if request.auth != null && isAdmin();
+      allow delete: if false;
+    }
+
+    // Compras aprobadas: el dueño puede leer las suyas; solo el admin escribe.
+    match /purchases/{purchaseId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == resource.data.uid || isAdmin());
+      allow create: if request.auth != null && isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Suscripciones: el dueño puede leer la suya; solo el admin escribe.
+    match /subscriptions/{subscriptionId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == resource.data.uid || isAdmin());
+      allow create, update: if request.auth != null && isAdmin();
+      allow delete: if false;
+    }
+
+    // Reseñas de clases: lectura pública; el usuario crea las suyas (1 por clase
+    // con su uid, comentario no vacío y 1-5 estrellas); el admin modera y elige
+    // cuáles destacar.
+    match /reviews/{reviewId} {
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.comment.size() > 0
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.featured == false;
+      allow read: if true;
+      allow update: if request.auth != null && isAdmin();
+      allow delete: if false;
+    }
+
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+             && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.isAdmin == true;
+    }
+  }
+}
