@@ -47,7 +47,8 @@ export async function getVideo(id: string): Promise<Video | null> {
 }
 
 export async function getCategories(): Promise<string[]> {
-  const snap = await getDocs(collection(db, COLLECTION))
+  const q = query(collection(db, COLLECTION), where("status", "==", "published"))
+  const snap = await getDocs(q)
   const set = new Set<string>()
   snap.docs.forEach((d) => {
     const cat = d.data().category
