@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Play, Clock } from "lucide-react"
+import { Play, Clock, Calendar } from "lucide-react"
 import type { Video } from "@/lib/types"
-import { formatPrice, formatDuration } from "@/lib/format"
+import { formatPrice, formatDuration, formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 export function VideoCard({ video }: { video: Video }) {
@@ -31,23 +31,31 @@ export function VideoCard({ video }: { video: Video }) {
           </div>
           <Badge
             variant={isFree ? "secondary" : "default"}
-            className="absolute left-2 top-2 backdrop-blur-sm"
+            className="absolute left-2 top-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur-sm"
           >
-            {isFree ? "GRATIS" : formatPrice(video.price, video.currency)}
+            {isFree ? "Gratis" : formatPrice(video.price, video.currency)}
           </Badge>
         </div>
         <CardContent className="p-4">
-          <h3 className="line-clamp-1 font-semibold">{video.title}</h3>
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{video.description}</p>
+          <h3 className="line-clamp-1 font-display text-xl font-normal tracking-tight">{video.title}</h3>
+          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{video.description}</p>
         </CardContent>
-        <CardFooter className="flex items-center justify-between px-4 py-3 text-xs text-muted-foreground">
+        <CardFooter className="flex items-center justify-between border-t px-4 py-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
           <span>{video.category}</span>
-          {video.duration ? (
-            <span className="flex items-center gap-1">
-              <Clock className="size-3.5" />
-              {formatDuration(video.duration)}
-            </span>
-          ) : null}
+          <div className="flex items-center gap-3">
+            {video.createdAt ? (
+              <span className="flex items-center gap-1">
+                <Calendar className="size-3.5" />
+                {formatDate(video.createdAt)}
+              </span>
+            ) : null}
+            {video.duration ? (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" />
+                {formatDuration(video.duration)}
+              </span>
+            ) : null}
+          </div>
         </CardFooter>
       </Card>
     </Link>

@@ -45,6 +45,7 @@ export default function Login() {
     setLoading(true)
     try {
       await loginWithEmail(email, password)
+      toast.success("Sesión iniciada correctamente. ¡Bienvenido de nuevo!")
       navigate(from, { replace: true })
     } catch {
       toast.error("No se pudo iniciar sesión. Verifica tus credenciales.")
@@ -57,6 +58,7 @@ export default function Login() {
     setLoading(true)
     try {
       await loginWithGoogle()
+      toast.success("Sesión iniciada correctamente con Google.")
       navigate(from, { replace: true })
     } catch {
       toast.error("No se pudo iniciar sesión con Google.")

@@ -27,7 +27,12 @@ async function getOrCreateProfile(user: User): Promise<Profile> {
   const ref = doc(db, "profiles", user.uid)
   const snap = await getDoc(ref)
   if (snap.exists()) {
-    return snap.data() as Profile
+    const data = snap.data()
+    const ts = data.createdAt as { toMillis?: () => number } | number | undefined
+    return {
+      ...(data as Profile),
+      createdAt: typeof ts === "number" ? ts : (ts?.toMillis?.() ?? Date.now()),
+    }
   }
   const profile: Profile = {
     uid: user.uid,

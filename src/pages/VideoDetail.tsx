@@ -11,12 +11,12 @@ import { ReviewList } from "@/components/review/ReviewList"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, Clock, Lock, Crown } from "lucide-react"
+import { ArrowLeft, Clock, Lock, Crown, ShieldCheck } from "lucide-react"
 import { formatPrice, formatDuration } from "@/lib/format"
 
 export default function VideoDetail() {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [access, setAccess] = useState<boolean | null>(null)
 
   const { data: video, isLoading } = useQuery({
@@ -27,8 +27,12 @@ export default function VideoDetail() {
 
   useEffect(() => {
     let active = true
-    if (!video || video.type === "free") {
-      if (active) setAccess(video ? true : null)
+    if (!video) {
+      if (active) setAccess(null)
+      return
+    }
+    if (video.type === "free" || profile?.isAdmin) {
+      if (active) setAccess(true)
       return
     }
     if (!user) {
@@ -41,7 +45,7 @@ export default function VideoDetail() {
     return () => {
       active = false
     }
-  }, [video, user])
+  }, [video, user, profile])
 
   if (isLoading || !video) {
     return (
@@ -145,7 +149,11 @@ function AccessCard({ paid }: { paid: boolean }) {
           <Crown className="size-4 text-primary" /> Tienes una suscripción activa. ¡Disfruta de la clase!
         </div>
       )}
-      {profile?.isAdmin && <p className="text-sm text-muted-foreground">Eres administrador.</p>}
+      {profile?.isAdmin && (
+        <div className="flex items-center gap-2 text-sm">
+          <ShieldCheck className="size-4 text-primary" /> Acceso total como administrador.
+        </div>
+      )}
       {paid && !sub?.active && !profile?.isAdmin && (
         <p className="text-sm text-muted-foreground">
           Compraste esta clase o tu suscripción te da acceso al catálogo completo.

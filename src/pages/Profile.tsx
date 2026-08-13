@@ -1,20 +1,31 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth, updateProfile } from "@/store/auth"
+import { getActiveSubscription, isSubscriptionActive } from "@/lib/data/access"
 import { uploadProfilePhoto } from "@/lib/cloudinary"
 import { formatDate } from "@/lib/format"
 import { toast } from "sonner"
-import { Camera, Save, Mail, Calendar, Shield } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { Camera, Save, Mail, Calendar, Shield, Crown, ArrowRight } from "lucide-react"
 
 export default function Profile() {
   const { user, profile } = useAuth()
   const [name, setName] = useState(profile?.name ?? "")
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const { data: sub } = useQuery({
+    queryKey: ["profile-sub", user?.uid],
+    queryFn: () => getActiveSubscription(user!.uid),
+    enabled: !!user,
+  })
+  const hasPlan = sub ? isSubscriptionActive(sub) : false
 
   const initials = (profile?.name ?? user?.email ?? "U")
     .split(/[\s@]+/)
@@ -87,6 +98,42 @@ export default function Profile() {
           <div className="text-sm text-muted-foreground">
             {uploading ? "Subiendo foto…" : "Haz clic en el ícono de cámara para cambiar tu foto."}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Membresía */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Crown className="size-5 text-primary" /> Mi membresía
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasPlan && sub ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">
+                  Activa
+                </Badge>
+                <span className="text-sm font-medium">{sub.planName}</span>
+              </div>
+              {sub.endDate && (
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Calendar className="size-4" /> Vence el {formatDate(sub.endDate)}
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground">Tienes acceso a todo el catálogo de pago.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-muted-foreground">No tienes una membresía activa.</p>
+              <Button asChild size="sm">
+                <Link to="/precios">
+                  Ver planes <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

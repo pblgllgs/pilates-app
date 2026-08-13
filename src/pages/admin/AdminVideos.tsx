@@ -11,18 +11,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Pencil, Trash2, Play, Star, Clock } from "lucide-react"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
+import { useState } from "react"
+import { Plus, Pencil, Trash2, Play, Star, Clock, Search } from "lucide-react"
 import { getVideos, deleteVideo } from "@/lib/data/videos"
 import { formatPrice, formatDate, formatDuration } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 const categoryStyles: Record<string, string> = {
-  Yoga: "bg-violet-500/10 text-violet-600",
-  Reformer: "bg-sky-500/10 text-sky-600",
-  Mat: "bg-emerald-500/10 text-emerald-600",
-  Banda: "bg-amber-500/10 text-amber-600",
-  Stretching: "bg-rose-500/10 text-rose-600",
+  Hipopresivos: "bg-violet-500/10 text-violet-600",
+  "Respiración": "bg-sky-500/10 text-sky-600",
+  Abdominales: "bg-emerald-500/10 text-emerald-600",
+  Postural: "bg-amber-500/10 text-amber-600",
+  Movilidad: "bg-rose-500/10 text-rose-600",
 }
 
 export default function AdminVideos() {
@@ -30,12 +34,40 @@ export default function AdminVideos() {
     queryKey: ["admin-videos"],
     queryFn: () => getVideos(),
   })
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(0)
+  const [deleting, setDeleting] = useState<{ id: string; title: string } | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`¿Eliminar el video "${title}"?`)) return
-    await deleteVideo(id)
-    toast.success("Video eliminado.")
-    refetch()
+  const PAGE_SIZE = 10
+
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? videos.filter(
+        (v) =>
+          v.title.toLowerCase().includes(q) ||
+          (v.category ?? "").toLowerCase().includes(q) ||
+          (v.level ?? "").toLowerCase().includes(q)
+      )
+    : videos
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageItems = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
+
+  const handleDelete = async () => {
+    if (!deleting) return
+    setLoading(true)
+    try {
+      await deleteVideo(deleting.id)
+      toast.success("Video eliminado.")
+      refetch()
+      setDeleting(null)
+    } catch {
+      toast.error("No se pudo eliminar el video.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -50,6 +82,19 @@ export default function AdminVideos() {
             <Plus className="size-4" /> Nuevo video
           </Link>
         </Button>
+      </div>
+
+      <div className="relative mt-6 max-w-sm">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(0)
+          }}
+          placeholder="Buscar por título, categoría o nivel..."
+          className="pl-9"
+        />
       </div>
 
       <Card className="mt-6">
@@ -72,14 +117,14 @@ export default function AdminVideos() {
                     Cargando...
                   </TableCell>
                 </TableRow>
-              ) : videos.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    Aún no hay videos. Sube el primero.
+                    {search.trim() ? "No hay videos que coincidan con la búsqueda." : "Aún no hay videos. Sube el primero."}
                   </TableCell>
                 </TableRow>
               ) : (
-                videos.map((v) => (
+                pageItems.map((v) => (
                   <TableRow key={v.id}>
                     <TableCell className="max-w-[280px]">
                       <div className="flex items-center gap-3">
@@ -152,7 +197,7 @@ export default function AdminVideos() {
                           variant="ghost"
                           size="icon"
                           title="Eliminar"
-                          onClick={() => handleDelete(v.id, v.title)}
+                          onClick={() => setDeleting({ id: v.id, title: v.title })}
                         >
                           <Trash2 className="size-4 text-destructive" />
                         </Button>
@@ -165,6 +210,32 @@ export default function AdminVideos() {
           </Table>
         </CardContent>
       </Card>
+
+      <Pagination
+        page={safePage}
+        totalPages={totalPages}
+        totalItems={filtered.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null)
+        }}
+        title="Eliminar video"
+        description={
+          deleting
+            ? `¿Seguro que quieres eliminar "${deleting.title}"? Esta acción no se puede deshacer.`
+            : undefined
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        loading={loading}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

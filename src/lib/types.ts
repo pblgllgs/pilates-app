@@ -104,3 +104,14 @@ export interface Review {
   createdAt: number
   photoUrl?: string
 }
+
+export interface InstructorProfile {
+  id: string
+  name: string
+  title: string
+  bio: string
+  experience: string
+  certifications: string[]
+  photoUrl?: string
+  updatedAt: number
+}

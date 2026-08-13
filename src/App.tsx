@@ -20,6 +20,8 @@ const AdminPlans = lazy(() => import("@/pages/admin/AdminPlans"))
 const AdminRequests = lazy(() => import("@/pages/admin/AdminRequests"))
 const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"))
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"))
+const AdminInstructor = lazy(() => import("@/pages/admin/AdminInstructor"))
+const About = lazy(() => import("@/pages/About"))
 const Profile = lazy(() => import("@/pages/Profile"))
 
 function PageLoader() {
@@ -32,7 +34,7 @@ function PageLoader() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="pilates-theme">
+    <ThemeProvider defaultTheme="light" storageKey="hipofit-theme">
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route element={<PublicLayout />}>
@@ -40,6 +42,7 @@ export default function App() {
             <Route path="/videos" element={<Videos />} />
             <Route path="/videos/:id" element={<VideoDetail />} />
             <Route path="/precios" element={<Pricing />} />
+            <Route path="/nosotros" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Register />} />
             <Route
@@ -76,6 +79,7 @@ export default function App() {
             <Route path="planes" element={<AdminPlans />} />
             <Route path="comentarios" element={<AdminReviews />} />
             <Route path="usuarios" element={<AdminUsers />} />
+            <Route path="instructora" element={<AdminInstructor />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

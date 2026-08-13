@@ -5,6 +5,7 @@
 import { initializeApp, type FirebaseOptions } from "firebase/app"
 import { getAuth } from "firebase/auth"
 import { initializeFirestore } from "firebase/firestore"
+import { getFunctions } from "firebase/functions"
 
 export const firebaseConfig: FirebaseOptions = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "TU_API_KEY",
@@ -18,3 +19,4 @@ export const firebaseConfig: FirebaseOptions = {
 export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true })
+export const functions = getFunctions(app, "us-central1")

@@ -22,6 +22,19 @@ export async function getAllSubscriptions(): Promise<Subscription[]> {
   })
 }
 
+export async function getAllPurchases(): Promise<Purchase[]> {
+  const snap = await getDocs(collection(db, "purchases"))
+  return snap.docs.map((d) => {
+    const data = d.data()
+    const ts = data.createdAt as { toMillis?: () => number } | number | undefined
+    return {
+      id: d.id,
+      ...data,
+      createdAt: typeof ts === "number" ? ts : (ts?.toMillis?.() ?? Date.now()),
+    } as unknown as Purchase
+  })
+}
+
 export async function getActiveSubscription(uid: string): Promise<Subscription | null> {
   const q = query(collection(db, "subscriptions"), where("uid", "==", uid), where("status", "==", "active"))
   const snap = await getDocs(q)

@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Check, X, Hourglass, CheckCircle2, XCircle, Clapperboard, Crown } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
+import { Check, X, Hourglass, CheckCircle2, XCircle, Clapperboard, Crown, Search } from "lucide-react"
 import { getRequests, approveRequest, rejectRequest } from "@/lib/data/requests"
 import { getAllProfiles } from "@/lib/data/profiles"
 import { formatPrice, formatDate } from "@/lib/format"
@@ -31,6 +33,9 @@ function userLabel(r: PurchaseRequest, profiles: Map<string, Profile>): { name: 
 export default function AdminRequests() {
   const [tab, setTab] = useState<Tab>("pending")
   const [acting, setActing] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 10
 
   const pendingQuery = useQuery({
     queryKey: ["requests-pending"],
@@ -45,16 +50,33 @@ export default function AdminRequests() {
     queryFn: () => getRequests("rejected"),
   })
 
-  const pending = pendingQuery.data ?? []
-  const approved = approvedQuery.data ?? []
-  const rejected = rejectedQuery.data ?? []
-  const requests = tab === "pending" ? pending : tab === "approved" ? approved : rejected
-
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => getAllProfiles(),
   })
   const profilesByUid = new Map(profiles.map((p) => [p.uid, p]))
+
+  const pending = pendingQuery.data ?? []
+  const approved = approvedQuery.data ?? []
+  const rejected = rejectedQuery.data ?? []
+  const requests = tab === "pending" ? pending : tab === "approved" ? approved : rejected
+
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? requests.filter((r) => {
+        const u = userLabel(r, profilesByUid)
+        const concept = r.kind === "purchase" ? (r.videoTitle ?? "") : (r.planName ?? "")
+        return (
+          u.name.toLowerCase().includes(q) ||
+          (u.email ?? "").toLowerCase().includes(q) ||
+          concept.toLowerCase().includes(q)
+        )
+      })
+    : requests
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageItems = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
 
   const refetchAll = () => {
     pendingQuery.refetch()
@@ -97,7 +119,10 @@ export default function AdminRequests() {
             Cuando un usuario paga, confirma aquí y se le habilita el acceso.
           </p>
         </div>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+        <Tabs value={tab} onValueChange={(v) => {
+          setTab(v as Tab)
+          setPage(0)
+        }}>
           <TabsList>
             <TabsTrigger value="pending" className="gap-1.5">
               <Hourglass className="size-3.5" /> Por aprobar ({pending.length})
@@ -110,6 +135,19 @@ export default function AdminRequests() {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+      </div>
+
+      <div className="relative mt-6 max-w-sm">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(0)
+          }}
+          placeholder="Buscar por usuario o concepto..."
+          className="pl-9"
+        />
       </div>
 
       <Card className="mt-6">
@@ -126,15 +164,18 @@ export default function AdminRequests() {
                 </TableRow>
               </TableHeader>
             <TableBody>
-              {requests.length === 0 ? (
+              {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    No hay solicitudes{" "}
-                    {tab === "pending" ? "por aprobar" : tab === "approved" ? "aprobadas" : "rechazadas"}.
+                    {search.trim()
+                      ? "No hay solicitudes que coincidan con la búsqueda."
+                      : `No hay solicitudes ${
+                          tab === "pending" ? "por aprobar" : tab === "approved" ? "aprobadas" : "rechazadas"
+                        }.`}
                   </TableCell>
                 </TableRow>
               ) : (
-                requests.map((r) => (
+                pageItems.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="max-w-[220px]">
                       <div className="flex items-center gap-2.5">
@@ -233,6 +274,14 @@ export default function AdminRequests() {
           </Table>
         </CardContent>
       </Card>
+
+      <Pagination
+        page={safePage}
+        totalPages={totalPages}
+        totalItems={filtered.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
     </div>
   )
 }

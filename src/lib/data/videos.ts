@@ -17,6 +17,16 @@ import type { Video } from "@/lib/types"
 
 const COLLECTION = "videos"
 
+function toVideo(d: { id: string; data: () => Record<string, unknown> }): Video {
+  const data = d.data()
+  const ts = data.createdAt as { toMillis?: () => number } | number | undefined
+  return {
+    ...(data as unknown as Video),
+    id: d.id,
+    createdAt: typeof ts === "number" ? ts : (ts?.toMillis?.() ?? 0),
+  }
+}
+
 export async function getVideos(opts?: { type?: "free" | "paid"; category?: string; publishedOnly?: boolean }) {
   const constraints = []
   if (opts?.publishedOnly) constraints.push(where("status", "==", "published"))
@@ -24,7 +34,7 @@ export async function getVideos(opts?: { type?: "free" | "paid"; category?: stri
   constraints.push(orderBy("createdAt", "desc"))
   const q = query(collection(db, COLLECTION), ...constraints)
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Video[]
+  return snap.docs.map(toVideo)
 }
 
 export async function getPublishedVideos(opts?: { type?: "free" | "paid"; category?: string }) {
@@ -33,7 +43,7 @@ export async function getPublishedVideos(opts?: { type?: "free" | "paid"; catego
 
 export async function getVideo(id: string): Promise<Video | null> {
   const snap = await getDoc(doc(db, COLLECTION, id))
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Video) : null
+  return snap.exists() ? toVideo(snap) : null
 }
 
 export async function getCategories(): Promise<string[]> {
@@ -73,5 +83,5 @@ export async function getVideosByIds(ids: string[]): Promise<Video[]> {
 export async function getRecentVideos(count = 4): Promise<Video[]> {
   const q = query(collection(db, COLLECTION), where("status", "==", "published"), orderBy("createdAt", "desc"), limit(count))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Video[]
+  return snap.docs.map(toVideo)
 }

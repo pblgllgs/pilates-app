@@ -41,6 +41,7 @@ export default function Register() {
     setLoading(true)
     try {
       await registerWithEmail(email, password, name)
+      toast.success("Cuenta creada. ¡Bienvenido a HipoFit!")
       navigate("/", { replace: true })
     } catch (err) {
       const code = (err as { code?: string }).code
@@ -56,7 +57,7 @@ export default function Register() {
       <div className="mb-6 flex flex-col items-center text-center">
         <PlayCircle className="h-10 w-10 text-primary" />
         <h1 className="mt-3 text-2xl font-bold tracking-tight">Crea tu cuenta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Empieza a entrenar pilates hoy</p>
+        <p className="mt-1 text-sm text-muted-foreground">Empieza a entrenar hipopresivos hoy</p>
       </div>
 
       <Card>

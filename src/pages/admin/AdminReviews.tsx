@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Pagination } from "@/components/ui/pagination"
 import { Stars } from "@/components/review/Stars"
 import { Check, Star, X } from "lucide-react"
 import { getReviews, setReviewStatus, setReviewFeatured } from "@/lib/data/reviews"
@@ -10,12 +11,19 @@ import { formatDate } from "@/lib/format"
 import { toast } from "sonner"
 import type { Review } from "@/lib/types"
 
+const PAGE_SIZE = 12
+
 export default function AdminReviews() {
   const { data: reviews = [], refetch } = useQuery({
     queryKey: ["admin-reviews"],
     queryFn: () => getReviews(),
   })
   const [acting, setActing] = useState<string | null>(null)
+  const [page, setPage] = useState(0)
+
+  const totalPages = Math.max(1, Math.ceil(reviews.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageItems = reviews.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
 
   const run = async (id: string, fn: () => Promise<void>, message: string) => {
     setActing(id)
@@ -50,7 +58,7 @@ export default function AdminReviews() {
             </CardContent>
           </Card>
         ) : (
-          reviews.map((r: Review) => (
+          pageItems.map((r: Review) => (
             <Card key={r.id} className={r.status === "pending" ? "border-primary/40" : undefined}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-start justify-between gap-2">
@@ -121,6 +129,14 @@ export default function AdminReviews() {
           {pending.length} pendiente{pending.length === 1 ? "" : "s"} · {approved.length} aprobado{approved.length === 1 ? "" : "s"}
         </p>
       )}
+
+      <Pagination
+        page={safePage}
+        totalPages={totalPages}
+        totalItems={reviews.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
     </div>
   )
 }

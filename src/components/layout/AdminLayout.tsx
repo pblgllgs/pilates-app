@@ -1,7 +1,9 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom"
 import { logout } from "@/store/auth"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, LayoutDashboard, PlayCircle, Receipt, Video, Hourglass, MessageSquare, Users } from "lucide-react"
+import { AssistantWidget } from "@/components/assistant/AssistantWidget"
+import { toast } from "sonner"
+import { ArrowLeft, LayoutDashboard, PlayCircle, Receipt, Video, Hourglass, MessageSquare, Users, UserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const items = [
@@ -11,6 +13,7 @@ const items = [
   { to: "/admin/planes", label: "Planes", icon: Receipt, end: false },
   { to: "/admin/comentarios", label: "Comentarios", icon: MessageSquare, end: false },
   { to: "/admin/usuarios", label: "Usuarios", icon: Users, end: false },
+  { to: "/admin/instructora", label: "Instructora", icon: UserRound, end: false },
 ]
 
 export function AdminLayout() {
@@ -21,7 +24,7 @@ export function AdminLayout() {
       <aside className="hidden w-64 flex-col border-r bg-muted/30 p-4 md:flex">
         <Link to="/" className="flex items-center gap-2 px-2 py-2">
           <PlayCircle className="h-6 w-6 text-primary" />
-          <span className="font-bold tracking-tight">PilatesStudio</span>
+          <span className="font-bold tracking-tight">HipoFit</span>
           <span className="ml-auto rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
             ADMIN
           </span>
@@ -55,6 +58,7 @@ export function AdminLayout() {
             className="w-full justify-start text-destructive hover:text-destructive"
             onClick={async () => {
               await logout()
+              toast.success("Sesión cerrada. ¡Hasta pronto!")
               navigate("/")
             }}
           >
@@ -80,6 +84,7 @@ export function AdminLayout() {
           <Outlet />
         </main>
       </div>
+      <AssistantWidget />
     </div>
   )
 }

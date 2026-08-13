@@ -138,7 +138,7 @@ export default function AdminVideoForm() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Título *</Label>
-              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Pilates para principiantes - Clase 1" />
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Hipopresivos para principiantes - Clase 1" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="desc">Descripción</Label>
@@ -152,11 +152,11 @@ export default function AdminVideoForm() {
                     <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Yoga">Yoga</SelectItem>
-                    <SelectItem value="Reformer">Reformer</SelectItem>
-                    <SelectItem value="Mat">Mat</SelectItem>
-                    <SelectItem value="Banda">Banda</SelectItem>
-                    <SelectItem value="Stretching">Stretching</SelectItem>
+                    <SelectItem value="Hipopresivos">Hipopresivos</SelectItem>
+                    <SelectItem value="Respiración">Respiración</SelectItem>
+                    <SelectItem value="Abdominales">Abdominales</SelectItem>
+                    <SelectItem value="Postural">Postural</SelectItem>
+                    <SelectItem value="Movilidad">Movilidad</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
