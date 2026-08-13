@@ -1,4 +1,4 @@
-name: Deploy to Firebase
+name: Deploy backend to Firebase
 
 on:
   push:
@@ -17,27 +17,13 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Create .env
-        run: |
-          echo "${{ secrets.ENV_FILE }}" | base64 --decode > .env
-          test -s .env || exit 1
-
       - name: Install functions dependencies
         run: npm ci
         working-directory: functions
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build frontend
-        run: npm run build
 
       - name: Build functions
         run: npm run build
         working-directory: functions
 
-      - name: Deploy to Firebase
-        run: npx firebase-tools@15.26.0 deploy --only hosting,firestore:rules,firestore:indexes,functions --project pilates-app-98885 --token "${{ secrets.FIREBASE_TOKEN }}"
+      - name: Deploy Firebase backend
+        run: npx firebase-tools@15.26.0 deploy --only firestore:rules,firestore:indexes,functions --project pilates-app-98885 --token "${{ secrets.FIREBASE_TOKEN }}"
